@@ -4,18 +4,33 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Blog.ViewModels;
 using Blog.Extensions;
+using Blog.ViewModels.Categories;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Blog.Controllers
 {
     [ApiController]
     public class CategoryController : ControllerBase
     {
+        private IMemoryCache _cache;
+
+        public CategoryController(IMemoryCache cache)
+        {
+            _cache = cache;
+        }
+
         [HttpGet("v1/categories")]
         public async Task<IActionResult> GetAllAsync([FromServices] BlogDataContext context)
         {
             try
             {
-                var categories = await context.Categories.ToListAsync();
+                var categories = await _cache.GetOrCreateAsync("CategoriesCache", async entry => // Pega o resultado do cache ou pega do banco e seta no cache
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1); // Seta para expirar em uma hora
+
+                    return await context.Categories.ToListAsync();
+                });
+
                 return Ok(new ResultViewModel<List<Category>>(categories));
             }
             catch (Exception)

@@ -2,6 +2,9 @@
 {
     public class ResultViewModel<T>
     {
+        public T Data { get; set; }
+        public List<string> Errors { get; private set; } = new List<string>();
+
         public ResultViewModel(T data, List<string> errors)
         {
             Data = data;
@@ -22,8 +25,5 @@
         {
             Data = data;
         }
-
-        public T Data { get; set; }
-        public List<string> Errors { get; private set; } = new List<string>();
     }
 }
