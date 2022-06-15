@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+LoadConfiguration(builder); // É possível obter configurações tanto do app.Configuration quanto do builder.Configuration, mais detalhes em https://github.com/balta-io/2811/discussions/17
 ConfigureAuthentication(builder);
 ConfigureMvc(builder);
 ConfigureServices(builder);
@@ -19,8 +20,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-LoadConfiguration(app);
 
 app.UseHttpsRedirection(); // Redireciona requisições http para https automaticamente
 app.UseAuthentication();
@@ -37,16 +36,16 @@ if (app.Environment.IsDevelopment())
 
 app.Run();
 
-void LoadConfiguration(WebApplication app)
+void LoadConfiguration(WebApplicationBuilder builder)
 {
     var smtp = new Configuration.SmtpConfiguration();
 
-    app.Configuration.GetSection("Smtp").Bind(smtp); // Atribui os valores daquela section para o objeto smtp
+    builder.Configuration.GetSection("Smtp").Bind(smtp); // Atribui os valores daquela section para o objeto smtp
 
     Configuration.Smtp = smtp;
-    //Configuration.JWTKey = app.Configuration.GetValue<string>("JWTKey");
-    Configuration.ApiKeyName = app.Configuration.GetValue<string>("ApiKeyName");
-    Configuration.APIKey = app.Configuration.GetValue<string>("APIKey");
+    Configuration.JWTKey = builder.Configuration.GetValue<string>("JWTKey");
+    Configuration.ApiKeyName = builder.Configuration.GetValue<string>("ApiKeyName");
+    Configuration.APIKey = builder.Configuration.GetValue<string>("APIKey");
 }
 
 void ConfigureAuthentication(WebApplicationBuilder builder)
