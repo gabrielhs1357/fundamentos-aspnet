@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,15 +15,26 @@ ConfigureAuthentication(builder);
 ConfigureMvc(builder);
 ConfigureServices(builder);
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 LoadConfiguration(app);
 
+app.UseHttpsRedirection(); // Redireciona requisiÃ§Ãµes http para https automaticamente
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseStaticFiles(); // Assim o servidor consegue renderizar arquivos estáticos
+app.UseStaticFiles(); // Assim o servidor consegue renderizar arquivos estï¿½ticos
 app.MapControllers();
 app.UseResponseCompression();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.Run();
 
 void LoadConfiguration(WebApplication app)
@@ -61,9 +73,9 @@ void ConfigureMvc(WebApplicationBuilder builder)
 {
     builder
         .Services
-        .AddMemoryCache(); // Adiciona cache na aplicação
+        .AddMemoryCache(); // Adiciona cache na aplicaï¿½ï¿½o
 
-    builder.Services.AddResponseCompression(options => // Adiciona compressão na aplicação (resposta são enviadas de forma comprimidas / zipadas)
+    builder.Services.AddResponseCompression(options => // Adiciona compressï¿½o na aplicaï¿½ï¿½o (resposta sï¿½o enviadas de forma comprimidas / zipadas)
     {
         // options.Providers.Add<BrotliCompressionProvider>();
         options.Providers.Add<GzipCompressionProvider>();
@@ -80,9 +92,9 @@ void ConfigureMvc(WebApplicationBuilder builder)
         .AddControllers()
         .ConfigureApiBehaviorOptions(options =>
         {
-            options.SuppressModelStateInvalidFilter = true; // Desabilita a validação automática das ViewModels
+            options.SuppressModelStateInvalidFilter = true; // Desabilita a validaï¿½ï¿½o automï¿½tica das ViewModels
         })
-        .AddJsonOptions(options => // Configura a serialização utilizada pelo .NET, evitando erros na rota v1/posts por exemplo ao não utilizar o .Select nela
+        .AddJsonOptions(options => // Configura a serializaï¿½ï¿½o utilizada pelo .NET, evitando erros na rota v1/posts por exemplo ao nï¿½o utilizar o .Select nela
         {
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
             options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
@@ -91,7 +103,8 @@ void ConfigureMvc(WebApplicationBuilder builder)
 
 void ConfigureServices(WebApplicationBuilder builder)
 {
-    builder.Services.AddDbContext<BlogDataContext>();
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    builder.Services.AddDbContext<BlogDataContext>(options => options.UseSqlServer(connectionString));
     builder.Services.AddTransient<TokenService>();
     builder.Services.AddTransient<EmailService>();
 }
